@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<meta charset="UTF-8">
+
+<!-- Bootstrap Core CSS -->
+<link href="css/bootstrap.css" rel="stylesheet">
+<link href="css/jquery.qtip.css" rel="stylesheet">
+
+<!--  JS -->
+<script type="text/javascript" src="js/log.js"></script>
+<script type="text/javascript" src="js/jquery.js"></script>
+<script type="text/javascript" src="js/jquery.qtip.js"></script>
+<script type="text/javascript" src="js/bootstrap.js"></script>
+<script type="text/javascript" src="js/bootstrap-growl.js"></script>
+<script type="text/javascript" src="js/notify.js"></script>
+<script type="text/javascript" src="js/websocket.js"></script>
+
+
+<title>Battleship</title>
+
+<style type="text/css">
+BODY {
+	padding: 20px;
+}
+TABLE {
+	margin: auto;
+	width: 70%;
+	/*border: 1px;
+	border-spacing: 20px; */	
+}
+
+/* Image check box, radio btns 
+ * http://code.iamkate.com/html-and-css/styling-checkboxes-and-radio-buttons/#imageBased
+ */
+input[type=checkbox]:not(old),
+input[type=radio   ]:not(old){
+  width   : 104px;
+  margin  : 0;
+  padding : 0;
+  opacity : 0;
+}
+
+input[type=checkbox]:not(old) + label {
+  display      : inline-block;
+  margin-left  : -104px;
+  padding-left : 104px;
+  background   : url('img/ship.png') no-repeat 0 0;
+  line-height  : 100px;
+}
+
+input[type=radio   ]:not(old) + label{
+  display      : inline-block;
+  margin-left  : -104px;
+  padding-left : 104x;
+  background   : url('img/bomb.png') no-repeat 0 0;
+  line-height  : 100px;
+}
+
+input[type=checkbox]:not(old):checked + label{
+  background-position : 0 -100px;
+}
+
+input[type=radio]:not(old):checked + label{
+  background-position : 0 -100px;
+}
+
+.ship {
+	width: 100px;
+}
+</style>
+
+<script type="text/javascript">
+
+// Bomb position counts per player
+// Positions can be bombed multiple times
+var BOMBS = [[0,0,0,0,0], [0,0,0,0,0]];
+
+// used to coordinate bomb/submit action
+//var mustSubmit = false;
+
+var gameover = false;
+
+/**
+ * @param player: Player number
+ * @param type: 's' (ship) = checkbox, 'b' (bomb) = radio
+ */
+function table (player, type) {
+	var d     = document;
+	var html  = '<table border="1">\n';
+	var qubit = 0;
+	
+	for ( var i = 0 ; i < 3 ; i ++) {
+		html += '<tr>';
+		
+		for ( var j = 0 ; j < 3 ; j ++) {
+			if ( (i + j) % 2 == 0) {
+				var id    = 'p' + player + type + qubit++;
+				
+				// checkbox = ship , radio = bomb
+				var itype = type == 's' ? 'checkbox' : 'radio';
+				var extra = type == 'b' ? ' onclick="cell_click_bomb(this)"'  : ' onclick="return cell_click_ship(this)"';
+				
+				// <TD> SHIP-INDEX DAMAGE IMGAE </TD>
+				html += '<td>' + (qubit - 1) + ' <span id="' + type + player + (qubit -1 ) + '"></span>' 
+				    + '<input id="' + id + '" name="' + id + '" type="' + itype + '"' + extra + '>'
+					+ '<label for="' + id + '" class="ship">&nbsp;</label></td>'
+			}
+			else {
+				html += '<td>&nbsp;</td>'; 
+			}
+		}
+		html += '</tr>\n';
+	}
+	html += '</table>';
+	
+	LOGD(html);
+	d.write(html);
+}
+
+/**
+ * Fires when a ship cell is clicked
+ */
+function cell_click_ship ( obj ) {
+    var id     = obj.id; 		
+    var player = parseInt(id.charAt(1));
+    //var type   = id.charAt(2);	// s = ship, b = bomb
+    var qubit  = parseInt(id.charAt(3));
+    var json = countShipsBombs();
+    
+    LOGD('Cell Clicked ' + id  + ' Counts:' + JSON.stringify(json));
+    if ( json.ships[0] > 3 || json.ships[1] > 3) {
+        //$('#' + id).attr('checked', false);
+        return error('All Players must place only 3 ships.');
+    } 
+    // no ship changes after bom
+    if ( json.bombs[0] > 0 || json.bombs[1] > 0 ) {
+        return error('No ship changes after bombs are placed.');
+    }
+    return true;
+}
+
+/**
+ * Fires when a bomb cell is clicked
+ */
+function cell_click_bomb ( obj ) {
+    var id     = obj.id; 		// For Bombs: p[PLAYER]b[QUBIT]
+    var player = parseInt(id.charAt(1));
+    var qubit  = parseInt(id.charAt(3));
+
+    // validate: { 'ships': [s1, s2], 'bombs': [b1, b2]}
+    var json = countShipsBombs();
+    LOGD('Bomb Clicked ' + id  + ' Counts:' + JSON.stringify(json));
+    
+    if ( json.ships[0] < 3 /*|| json.ships[1] < 3 */) {
+        $('#' + id).attr('checked', false);
+        return error('All Players must place 3 ships first.');
+    }
+    /*
+    if ( mustSubmit) {
+        $('#' + id).attr('checked', false);
+        return error('Bomb in place already. Click Submit.');
+    }*/
+    
+    /* check player turn. Buggy :( 
+    var dif = (json.bombs[player - 1] + 1) - json.bombs[ 1 - (player - 1)];
+    
+    if ( dif >= 2 ) {
+		if ( BOMBS[player - 1 ][qubit] < 1 ) {
+			$('#' + id).attr('checked', false);
+		}
+		return error("Not your turn. It's player " + ((1-(player-1)) + 1) );
+    } */
+    
+    // Count bomb
+    BOMBS[player - 1 ][qubit]++;
+
+    // Assign counts to: d[PLAYER][QUBIT]
+    $('#b' + player + qubit).html("(" + BOMBS[player - 1 ][qubit] + ")");
+    
+    LOGD('Bomb click ' + id + " player=" + player + " qubit=" + qubit + ' Bombs:' + JSON.stringify(BOMBS));
+    
+    // bomb in place, click submit
+    notify('Bomb ready. Click Submit', 'info');
+    //mustSubmit = true;
+}
+
+function error (msg) {
+    notify(msg, 'danger');
+    return false
+}
+
+
+// return { 'ships': [s1, s2], 'bombs': [b1, b2]}
+function countShipsBombs() {
+    var s1 = 0;
+    var s2 = 0;
+    var b1 = 0, b2 = 0; // bomb counts
+    
+    for ( var i = 0 ; i < 5 ; i++) {
+        if ( $('#p1s' + i).prop('checked') ) s1++;
+        if ( $('#p2s' + i).prop('checked') ) s2++;
+        b1 += BOMBS[0][i]; 
+        b2 += BOMBS[1][i];
+    }
+	return { 'ships': [s1, s2], 'bombs': [b1, b2]}
+} 
+
+// Fires when the submit btn is clicked
+function submit_click() {
+    if ( gameover) {
+        notify('Game Over. Click reset.', 'warning');
+        return;
+    }
+    if ( validate() ) {
+		notify('Please wait...', 'info');
+		submit();
+    }
+}
+
+// Validate before submit
+function validate() {
+    // ship counts
+    var s1 = 0;
+    var s2 = 0;
+    var b1 = 0, b2 = 0; // bomb counts
+    
+    for ( var i = 0 ; i < 5 ; i++) {
+        if ( $('#p1s' + i).prop('checked') ) s1++;
+        if ( $('#p2s' + i).prop('checked') ) s2++;
+        b1 += BOMBS[0][i]; // BOMBS1[i];
+        b2 += BOMBS[1][i]; // BOMBS2[i];
+    }
+    LOGD('Validate s1=' + s1 + ' s2=' + s2 + ' b1=' + b1 + ' b2=' + b2);
+    
+    if ( s1 < 3 )  return error ('Player 1 place 3 ships.');
+    //if ( s2 < 3 )  return error ('Player 2 place 3 ships.');
+    
+    if ( b1 == 0 /*&& b2 == 0*/ )  return error ('Place 1 bomb the click submit.');
+    
+	return true;	
+}
+
+// If data is valid, sendit to the backend
+function submit() {
+	var frm  = $('#frm1');
+	//var url  = "cgi-bin/qiskit-driver.sh"; 
+	
+	// Data format: ships1=0,1,2&ships2=0,1,2&bombs1=0,1,0,0,0&bombs2=0,0,0,0,0
+	// ships has the positions per player, bombs has the bomb position counts per player
+	// ships: 3 ships per player, bombs: 5 position counts
+	var data = ''; 
+	var s1   = '';
+	//var s2   = '';
+	
+	for ( var i = 0 ; i < 5 ; i++) {
+		if ( $('#p1s' + i).prop('checked') ) s1 += ',' + i;
+		//if ( $('#p2s' + i).prop('checked') ) s2 += ',' + i;
+	}
+	// remove 1st comma
+	if (s1.length > 0) s1 = s1.substring(1);
+	//if (s2.length > 0) s2 = s2.substring(1);
+	
+	/* query string
+	data = 'ships1=' + s1 + '&ships2=' + s2 
+	    + '&bombs1=' + BOMBS[0].join(',') + '&bombs2=' + BOMBS[1].join(',')
+	    + '&device=' + $('#device').val(); */
+	data = JSON.stringify({'name' : $('#name').val(), 'ships': s1
+	    , 'bombs': BOMBS[0].join(','), 'device': $('#device').val() });
+	    
+	LOGD('Url:' + url + ' data=' + data); 
+	
+	// https://api.jquery.com/jquery.get/
+	WS_send(data);
+	
+	// disable submit
+	$("#btnSubmit").prop("disabled", true);
+	//mustSubmit = false;
+
+	/*
+	$.get( url, data)
+	.done(function (json) {
+		handleResponse (json);
+	})	
+	.fail(function() {
+	    LOGD( "error" );
+	    notify('Internal Server Error. Check logs.', 'danger');
+	})
+	*/
+}
+
+// {"status":200,"message":"OK","damage":[[0.475,0,0,0.70,0],[0.786,0.90,0,0,0.]]}
+function handleResponse (json) {
+	LOGD("Got: " + JSON.stringify(json))
+	if ( typeof(json.damage) == 'undefined' ) {
+	    LOGW("Missing damage from json " + JSON.stringify(json));
+	    return;
+	}
+	var damage 	= json.damage;
+	var d1      = damage; //[0];	// damage P1
+	//var d2      = damage[1];	// damage P2
+	
+	// assign damage to player board
+	//LOGD("Damege P1=" + JSON.stringify(d1) + " P2=" + JSON.stringify(d2));
+
+	for ( var i = 0 ; i < 5 ; i++) {
+	    var pct1 = (d1[i] * 100).toFixed(1);
+	    //var pct2 = (d2[i] * 100).toFixed(1);
+	    var s1, c1; //, s2, c2;
+	    if ( pct1 < 90 ) {
+	        s1 = '['  + pct1 + '%]';
+	        c1 = 'cyan';
+	    }
+	    else {
+	        s1 = 'SUNK';
+	        c1 = 'red';
+	        notify('Player 1 Ship ' + i + ' sunk.', 'warning');
+	    }
+	    /*
+	    if ( pct2 < 90 ) {
+	        s2 = '['  + pct2 + '%]';
+	        c2 = 'cyan';
+	    }
+	    else {
+	        s2 = 'SUNK';
+	        c2 = 'red';
+	        notify('Player 2 Ship ' + i + ' sunk.', 'warning');
+	    } */
+        //LOGD(i + ' s1=' + s1 + ' s2=' + s2 + ' d1=' + d1[i] + ' d2=' + d2[i]);
+	    $('#s1' + i).html(s1).css('background-color', c1);
+	    //$('#s2' + i).html(s2).css('background-color', c2);
+	}
+	
+	// Game Result: damage sum > 2.85 (0.95 * 3) = loss 
+	// https://www.w3schools.com/jsref/jsref_reduce.asp
+	// array.reduce(function(total, currentValue, currentIndex, arr), initialValue)
+	var s1 = d1.reduce(function(total, currentValue, currentIndex, arr) { return total + currentValue}, 0);
+	//var s2 = d2.reduce(function(total, currentValue, currentIndex, arr) { return total + currentValue}, 0);
+	//var winner = 0;
+	//if ( s1 > 2.85) winner = 2;
+	//if ( s2 > 2.85) winner = 1;
+	/*
+	LOGD ("Resuls Damage sums s1:" + s1 + " s2:" + s2); */
+	
+	if ( s1 > 2.85 /*winner != 0 */) {
+	    notify ('** G.A.M.E O.V.E.R You loose :( ', 'success');
+	    gameover = true;
+	} 
+
+	// enable submit
+	$("#btnSubmit").prop("disabled", false);
+}
+
+// Restart game: fires when the reset btn is clicked
+function reset_click () {
+    if ( ! confirm("Are you sure?")) {
+        return;
+    }
+    LOGD("Reset.");
+    gameover = false;
+    //mustSubmit = false;
+    for ( var i = 0 ; i < 5 ; i++) {
+        $('#p1s' + i).attr('checked', false);
+        $('#p2s' + i).attr('checked', false);
+        $('#p1b' + i).attr('checked', false);
+        $('#p2b' + i).attr('checked', false);
+        // info spans
+        $('#s1' + i).html('');
+        $('#s2' + i).html('');
+        $('#b1' + i).html('');
+        $('#b2' + i).html('');
+        BOMBS[0][i] = 0; 
+        BOMBS[1][i] = 0;
+    }
+    WS_send(JSON.stringify({'name' : $('#name').val(), 'action': 'reset'}));
+}
+
+function win_onload () {
+    WS_initialize ();   
+    // set player name
+    $('#name').val('Player-' + CLIENT_ID);
+}
+
+window.onload = win_onload;
+
+</script>
+
+</head>
+
+<body>
+
+<h1>Quantum BattleShip</h1>
+<hr>
+<form id="frm1">
+Device
+<select id="device" name="device">
+  <option value="local_qasm_simulator">Local Simulator</option>
+  <option value="ibmqx_qasm_simulator">IBM Simulator</option>
+  <option value="ibmqx2">ibmqx2</option>
+</select>
+
+&nbsp;&nbsp;&nbsp;&nbsp;
+Name <input id="name" type="text">
+
+<table>
+	<tr>
+	<td>
+		<div><h3>Ships</h3></div>
+		<script type="text/javascript"> table(1, 's')</script>
+	</td>
+	<!-- 
+	<td>
+		<div><h3>Player 2</h3></div>
+		<script type="text/javascript"> table(2, 's')</script>
+	</td>
+	-->
+	</tr>
+	<tr>
+	<td>
+		<div><h3>Bombs</h3></div>
+		<script type="text/javascript"> table(1, 'b')</script>
+	</td>
+	<!-- 
+	<td>
+		<div><h3>Player 2 Bombs</h3></div>
+		<script type="text/javascript"> table(2, 'b')</script>
+	</td>
+	-->
+	</tr>
+	
+</table>
+</form>
+
+<br/>
+
+<button id="btnSubmit" class="btn btn-primary" onclick="submit_click()">Submit</button>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<button class="btn btn-info" onclick="reset_click()">Reset</button>
+
+</body>
+</html>

@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<meta charset="UTF-8">
+
+<!-- Bootstrap Core CSS -->
+<link href="css/bootstrap.css" rel="stylesheet">
+<link href="css/jquery.qtip.css" rel="stylesheet">
+
+<!--  JS -->
+<script type="text/javascript" src="js/log.js"></script>
+<script type="text/javascript" src="js/jquery.js"></script>
+<script type="text/javascript" src="js/jquery.qtip.js"></script>
+<script type="text/javascript" src="js/bootstrap.js"></script>
+<script type="text/javascript" src="js/bootstrap-growl.js"></script>
+<script type="text/javascript" src="js/notify.js"></script>
+
+
+<title>Battleship</title>
+
+<style type="text/css">
+BODY {
+	padding: 20px;
+}
+TABLE {
+	margin: auto;
+	width: 80%;
+	/*border: 1px;
+	border-spacing: 20px; */	
+}
+
+/* Image check box, radio btns 
+ * http://code.iamkate.com/html-and-css/styling-checkboxes-and-radio-buttons/#imageBased
+ */
+input[type=checkbox]:not(old),
+input[type=radio   ]:not(old){
+  width   : 104px;
+  margin  : 0;
+  padding : 0;
+  opacity : 0;
+}
+
+input[type=checkbox]:not(old) + label {
+  display      : inline-block;
+  margin-left  : -104px;
+  padding-left : 104px;
+  background   : url('img/ship.png') no-repeat 0 0;
+  line-height  : 100px;
+}
+
+input[type=radio   ]:not(old) + label{
+  display      : inline-block;
+  margin-left  : -104px;
+  padding-left : 104x;
+  background   : url('img/bomb.png') no-repeat 0 0;
+  line-height  : 100px;
+}
+
+input[type=checkbox]:not(old):checked + label{
+  background-position : 0 -100px;
+}
+
+input[type=radio]:not(old):checked + label{
+  background-position : 0 -100px;
+}
+
+.ship {
+	width: 100px;
+}
+</style>
+
+<script type="text/javascript">
+
+/**
+ * @param player: Player number
+ */
+function table (player, type) {
+	var d     = document;
+	var html  = '<table border="1">\n';
+	var qubit = 0;
+	
+	for ( var i = 0 ; i < 3 ; i ++) {
+		html += '<tr>';
+		
+		for ( var j = 0 ; j < 3 ; j ++) {
+			if ( (i + j) % 2 == 0) {
+				var id    = 'p' + player + type + qubit++;
+				
+				// checkbox = ship , radio = bomb
+				var itype = type == 's' ? 'checkbox' : 'radio';
+				
+				html += '<td>' + (qubit - 1) + ' <input id="' + id + '" name="' + id + ' "type="' + itype + '">'
+					+ '<label for="' + id + '" class="ship">&nbsp;</label></td>'
+			}
+			else {
+				html += '<td>&nbsp;</td>'; 
+			}
+		}
+		html += '</tr>\n';
+	}
+	html += '</table>';
+	
+	LOGD(html);
+	d.write(html);
+}
+
+function submit() {
+	var frm  = $('#frm1');
+	var data = frm.serialize();
+	var url  = "cgi-bin/qiskit-driver.sh"; 
+	LOGD('Url:' + url + ' data=' + data);
+	
+	// https://api.jquery.com/jquery.get/
+	$.get( url, data)
+	.done(function (json) {
+		LOGD("Done: " + JSON.stringify(json))
+	})	
+	.fail(function() {
+	    LOGD( "error" );
+	})
+	
+}
+
+</script>
+
+</head>
+
+<body>
+
+<form id="frm1">
+<table>
+	<tr>
+	<td>
+		<div>Player 1</div>
+		<script type="text/javascript"> table(1, 's')</script>
+	</td>
+	<td>
+		<div>Player 2</div>
+		<script type="text/javascript"> table(2, 's')</script>
+	</td>
+	</tr>
+	<tr>
+	<td>
+		<div>Player 1 Bombs</div>
+		<script type="text/javascript"> table(1, 'b')</script>
+	</td>
+	<td>
+		<div>Player 2 Bombs</div>
+		<script type="text/javascript"> table(2, 'b')</script>
+	</td>
+	</tr>
+	
+</table>
+</form>
+
+<button class="btn btn-primary" onclick="submit()">Submit</button>
+
+</body>
+</html>

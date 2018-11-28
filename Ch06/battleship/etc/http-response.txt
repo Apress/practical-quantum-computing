@@ -1,0 +1,8 @@
+{
+	"status": 200,
+	"message": "Ship Pos: [[0, 1, 2], [2, 3, 4]] Bomb counts: [[1, 0, 0, 0, 0], [1, 0, 0, 0, 0]]<br>Device: local_qasm_simulator Shots:1024<br>Damage: [[1.0, 0, 0, 0, 0], [0, 0, 0, 0, 0]]<br>",
+	"damage": [
+		[1, 0, 0, 0, 0],
+		[0, 0, 0, 0, 0]
+	]
+}

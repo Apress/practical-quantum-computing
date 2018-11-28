@@ -1,0 +1,40 @@
+{
+	"id": "aA46vJHgnKQko3u5L1QqbUDk31sY2m",
+	"config": {
+		"max_credits": 10,
+		"backend": "local_qasm_simulator",
+		"shots": 1024
+	},
+	"circuits": [{
+		"name": "Circuit",
+		"config": {
+			"coupling_map": "None",
+			"layout": "None",
+			"basis_gates": "u1,u2,u3,cx,id",
+			"seed": 123
+		},
+		"compiled_circuit": {
+			"operations": [{
+				"name": "u3",
+				"params": [3.141592653589793, 0.0, 3.141592653589793],
+				"texparams": ["\\pi", "0", "\\pi"],
+				"qubits": [0]
+			}, {
+				"name": "measure",
+				"qubits": [0],
+				"clbits": [0]
+			}],
+			"header": {
+				"number_of_qubits": 1,
+				"qubit_labels": [
+					["qr", 0]
+				],
+				"number_of_clbits": 1,
+				"clbit_labels": [
+					["cr", 1]
+				]
+			}
+		},
+		"compiled_circuit_qasm": "OPENQASM 2.0;\ninclude \"qelib1.inc \";\nqreg qr[1];\ncreg cr[1];\nu3(3.14159265358979,0,3.14159265358979) qr[0];\nmeasure qr[0] -> cr[0];\n"
+	}]
+}

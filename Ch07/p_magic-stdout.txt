@@ -1,0 +1,112 @@
+--- ONE ROUND
+
+C:\Users\vsilva\Documents\Books\Quantum\Workspace\Ch07>c:\python36-64\python.exe p_magicsq.py
+Magic Square  a = 3 b = 3 Device: ibmqx_qasm_simulator
+OPENQASM 2.0;
+include "qelib1.inc";
+qreg qr[4];
+creg cr[4];
+h qr[0];
+h qr[1];
+z qr[0];
+z qr[1];
+cx qr[0],qr[2];
+cx qr[1],qr[3];
+x qr[2];
+x qr[3];
+cz qr[0],qr[1];
+swap qr[0],qr[1];
+h qr[0];
+h qr[1];
+x qr[0];
+x qr[1];
+cz qr[0],qr[1];
+x qr[0];
+x qr[1];
+measure qr[0] -> cr[0];
+measure qr[1] -> cr[1];
+cx qr[3],qr[2];
+x qr[3];
+h qr[3];
+measure qr[2] -> cr[2];
+measure qr[3] -> cr[3];
+
+Device = ibmqx_qasm_simulator counts: {'1101': 1}
+Alice answer for a =  3 is [1, 0, 1]
+Bob answer for b =  3 is [1, 1, 1]
+Alice and Bob won
+
+
+----
+
+C:\Temp\qiskit-api-py-master\test>c:\python36-64\python.exe p_magicsq.py
+
+Magic Square  a = 2 b = 3 Device: ibmqx_qasm_simulator
+OPENQASM 2.0;
+include "qelib1.inc";
+qreg qr[4];
+creg cr[4];
+h qr[0];
+h qr[1];
+z qr[0];
+z qr[1];
+cx qr[0],qr[2];
+cx qr[1],qr[3];
+x qr[2];
+x qr[3];
+x qr[0];
+x qr[1];
+u1(0.785398163397448) qr[0];
+cx qr[0],qr[1];
+u1(-0.785398163397448) qr[1];
+cx qr[0],qr[1];
+u1(0.785398163397448) qr[1];
+x qr[0];
+x qr[1];
+u1(0.785398163397448) qr[0];
+cx qr[0],qr[1];
+u1(-0.785398163397448) qr[1];
+cx qr[0],qr[1];
+u1(0.785398163397448) qr[1];
+x qr[0];
+h qr[0];
+h qr[1];
+measure qr[0] -> cr[0];
+measure qr[1] -> cr[1];
+cx qr[3],qr[2];
+x qr[3];
+h qr[3];
+measure qr[2] -> cr[2];
+measure qr[3] -> cr[3];
+
+Device = ibmqx_qasm_simulator counts: {'0011': 1}
+Alice answer for a =  2 is [1, 1, 0]
+Bob answer for b =  3 is [0, 0, 1]
+Alice and Bob won
+
+
+
+--- ALL ROUNDS
+python.exe p_magicsq.py
+Asking Alice and Bob with a and b are:  1 1
+        #wins =  10 out of  10 shots
+Asking Alice and Bob with a and b are:  1 2
+        #wins =  10 out of  10 shots
+Asking Alice and Bob with a and b are:  1 3
+        #wins =  10 out of  10 shots
+Asking Alice and Bob with a and b are:  2 1
+        #wins =  10 out of  10 shots
+Asking Alice and Bob with a and b are:  2 2
+        #wins =  10 out of  10 shots
+Asking Alice and Bob with a and b are:  2 3
+        #wins =  10 out of  10 shots
+Asking Alice and Bob with a and b are:  3 1
+        #wins =  10 out of  10 shots
+Asking Alice and Bob with a and b are:  3 2
+        #wins =  10 out of  10 shots
+Asking Alice and Bob with a and b are:  3 3
+        #wins =  10 out of  10 shots
+Number of Games =  90
+Number of Wins =  90
+Winning probabilities =  100.0
+

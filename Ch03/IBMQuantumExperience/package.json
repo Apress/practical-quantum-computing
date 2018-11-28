@@ -1,0 +1,14 @@
+{
+  "name": "IBMQuantumExperience",
+  "version": "1.0.0",
+  "description": "IBM Quantum Experience REST Client",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Vladimir Silva",
+  "license": "ISC",
+  "dependencies": {
+    "request": "^2.85.0"
+  }
+}

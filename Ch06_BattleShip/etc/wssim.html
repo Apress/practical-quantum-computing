@@ -1,0 +1,229 @@
+<!--
+  Licensed to the Apache Software Foundation (ASF) under one or more
+  contributor license agreements.  See the NOTICE file distributed with
+  this work for additional information regarding copyright ownership.
+  The ASF licenses this file to You under the Apache License, Version 2.0
+  (the "License"); you may not use this file except in compliance with
+  the License.  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Apache Tomcat WebSocket Examples: Chat</title>
+    <style type="text/css">
+        input#chat {
+            width: 410px;
+        }
+
+        #console-container {
+            width: 500px;
+        }
+
+        #console {
+            border: 1px solid #CCCCCC;
+            border-right-color: #999999;
+            border-bottom-color: #999999;
+            height: 170px;
+            overflow-y: scroll;
+            padding: 5px;
+            width: 100%;
+        }
+
+        #console p {
+            padding: 0;
+            margin: 0;
+        }
+    </style>
+    <script type="text/javascript">
+    	function Chat() {
+    		this.socket 	= null;
+    		this.endPoint 	= null;
+    		this.initialize = initialize;
+    		this.connect 	= connect;
+    		this.disconnect = disconnect;
+    		this.getEndPoint = getEndPoint;
+    		this.send		= send;
+    	};
+    	
+        //var Chat = {};
+        
+        function connect (host) {
+			Console.log("WS Connect " + host); 
+			
+            if ('WebSocket' in window) {
+                this.socket = new WebSocket(host);
+            } else if ('MozWebSocket' in window) {
+                this.socket = new MozWebSocket(host);
+            } else {
+                Console.log('Error: WebSocket is not supported by this browser.');
+                return;
+            }
+			
+            this.socket.onopen = function () {
+                Console.log('WS Opened ' + host); // as ' + endPoint);
+                //Console.log('Info: EndPoint ' + endPoint);
+                /*
+                document.getElementById('chat').onkeydown = function(event) {
+                    if (event.keyCode == 13) {
+                        Chat.sendMessage();
+                    }
+                };*/
+            };
+
+            this.socket.onclose = function () {
+                Console.log('WS Closed ' + host);
+            };
+
+            this.socket.onmessage = function (message) {
+                Console.log(message.data);
+            };
+        } 
+
+        function disconnect() {
+        	//Chat.socket.close();
+        	this.socket.close();
+        };
+        
+        function initialize (agent, host) {
+ 			this.endPoint = host + '?clientId=' + agent + "&windowId=" + '1484594166203'; 
+			
+            this.connect(this.endPoint);
+        };
+
+        function getEndPoint () { return this.endPoint};
+
+        function send (text) {
+ 	        this.socket.send(text);
+        };
+
+        /* TODO
+        Chat.prototype.sendMessage = (function(message) {
+            //var message = document.getElementById('chat').value;
+            if (message != '') {
+                socket.send(message);
+                //document.getElementById('chat').value = '';
+                Console.log('Sent ' + message + ' to ' + endPoint);
+            }
+        }); */
+
+        var Console = {};
+
+        Console.log = (function(message) {
+            var console = document.getElementById('console');
+            console.innerHTML += message + "\n";
+            /*
+            var p = document.createElement('p');
+            p.style.wordWrap = 'break-word';
+            p.innerHTML = message;
+            console.appendChild(p);
+            while (console.childNodes.length > 25) {
+                console.removeChild(console.firstChild);
+            }
+            console.scrollTop = console.scrollHeight; */
+        });
+        
+		function ClearLog() {
+			document.getElementById('console').innerHTML = '';
+		}
+
+        var ALL_CHATS = new Array();
+        
+        function Connect() {
+        	var prefix = 4600023000;
+        	var size = document.getElementById('agents').value;
+        	var host  = document.getElementById('endpoint').value;
+        	
+        	Console.log("Host: " + host + " Size: " + size);
+        	
+            for ( var i = 0 ; i < size ; i ++ ) {
+            	ALL_CHATS[i] = new Chat();
+            	ALL_CHATS[i].initialize(prefix + i, host);
+            }
+        }
+        
+        function Disconnect() {
+        	for ( var i = 0 ; i < ALL_CHATS.length ; i ++ ) {
+        		//Console.log('Disconnect [' + i + '] : ' + ALL_CHATS[i].getEndPoint());
+        		ALL_CHATS[i].disconnect()
+        	}
+        }
+        
+        function Send() {
+        	var text = document.getElementById('message').value;
+        	for ( var i = 0 ; i < ALL_CHATS.length ; i ++ ) {
+        		ALL_CHATS[i].send(text);
+        	}
+        }
+        
+        /*
+        function setAgentAssign() {
+        	document.getElementById('chat').value = '{"id":"26826","skill":"OM Work Inbound","session":"ENTER_SESSION","eventTimeStamp":"2013-10-21T17:59:45.018Z","type":"agentAssign","agent":"agent1"}';
+        } 
+        */
+
+        /* The LP agent console must initiate the transfer
+        function setAgentTransfer() {
+        	document.getElementById('chat').value = '{"id":"26826","skill":"OM Work Inbound","session":"ENTER_SESSION","eventTimeStamp":"2013-10-21T17:59:45.018Z","type":"agentAssign","agent":"agent1", "requireAgent": "agent2"}';
+        } */
+        
+        function onload () {
+        	//document.getElementById('endpoint').value = window.location.host + '/EnterpriseAdapter/ServerWebSocket';
+        }
+
+    </script>
+</head>
+<body onload="onload()">
+
+<noscript><h2 style="color: #ff0000">Seems your browser doesn't support Javascript! Websockets rely on Javascript being enabled. Please enable
+    Javascript and reload this page!</h2></noscript>
+<div>
+    <p>
+    	<h2>WebSocket Simulator</h2>
+    	
+    	<p>Host:Port</p>
+        <input size="50" type="text" id="endpoint" value="ws://localhost:8080/CloudConnectorNode002/WSPhone">
+    	
+    	<p>Number of agents</p>
+        <input size="50" type="text" placeholder="type and press enter to chat" id="agents" value="10">
+ 
+   		<p>Send Message</p>
+        <input size="50" type="text" id="message" value="{type:'foo', key:'value'}">
+         
+         <p>
+         <textarea style="height: 300px;width: 90%" id="console" rows="30" cols="80" placeholder="Log"></textarea>
+         </p>
+
+         
+         <br>
+         <button onclick="Connect()">Connect</button>
+         &nbsp; &nbsp;&nbsp;
+         <button onclick="Disconnect()">Disconnect</button>
+
+         &nbsp; &nbsp;&nbsp;
+         <button onclick="ClearLog()">Clear Log</button>
+
+         &nbsp; &nbsp;&nbsp;
+         <button onclick="Send()">Send Message</button>
+         
+         <!-- 
+         <button onclick="Chat.sendMessage()">Send</button>
+         <button onclick="setAgentAssign()">Agent Assign</button>
+         <button onclick="setAgentTransfer()">Agent Transfer</button>
+         -->
+    </p>
+    <!-- 
+    <div id="console-container">
+        <div id="console"></div>
+    </div>
+     -->
+</div>
+</body>
+</html>

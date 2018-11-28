@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Move element &apos;SysRunner.java&apos; to &apos;Ch06_BattleShip/src/ch06.io&apos;&#x0D;&#x0A;- Original project: &apos;Ch06_BattleShip&apos;&#x0D;&#x0A;- Destination element: &apos;Ch06_BattleShip/src/ch06.io&apos;&#x0D;&#x0A;- Original element: &apos;ch06.SysRunner.java&apos;&#x0D;&#x0A;- Update references to refactored element" description="Move compilation unit" destination="/src&lt;ch06.io" element1="/src&lt;ch06{SysRunner.java" files="0" flags="589830" folders="0" id="org.eclipse.jdt.ui.move" patterns="*" policy="org.eclipse.jdt.ui.moveResources" qualified="false" references="true" stamp="1523217704115" units="1" version="1.0"/>
+</session>
